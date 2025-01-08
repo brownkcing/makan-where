@@ -21,11 +21,11 @@ export const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
     >
       {/* Restaurant Image */}
       <div className="relative h-48 bg-gray-200">
-        <img 
+        {/* <img 
           src="/api/placeholder/400/200" 
           alt={restaurant.name}
           className="w-full h-full object-cover"
-        />
+        /> */}
         <button 
           onClick={(e) => {
             e.preventDefault();

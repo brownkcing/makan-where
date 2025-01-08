@@ -18,7 +18,7 @@ export interface Restaurant {
     }>;
     peakHours: string[];
     currentWaitTime?: number;
-    coordinates: {
+    coordinates?: {
         lat: number;
         lng: number;
       };
@@ -35,4 +35,8 @@ export interface Restaurant {
     hungerLevel: 'light' | 'normal' | 'very hungry';
     favoriteTypes: string[];
     avoidTypes: string[];
+  }
+
+  export interface UserHistory {
+    restaurantId: number; // Simplify it to represent the actual structure you're using
   }

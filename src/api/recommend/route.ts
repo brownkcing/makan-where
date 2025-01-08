@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import type { Restaurant, UserPreferences } from '@/lib/types';
+import type { Restaurant, UserPreferences, UserHistory } from '@/lib/types';
 
 // This would eventually be replaced with a real ML model
 function calculateRestaurantScore(
   restaurant: Restaurant,
   preferences: UserPreferences,
-  userHistory: any[], // This would be actual user history data
+  userHistory: UserHistory[], // This would be actual user history data
   timeOfDay: number
 ): number {
   let score = 0;
@@ -39,7 +39,7 @@ function calculateRestaurantScore(
   }
 
   // History-based scoring (simplified)
-  const visitCount = userHistory.filter(visit => visit.restaurantId === restaurant.id).length;
+  const visitCount = userHistory.filter(visit => visit.restaurantId === Number(restaurant.id)).length;
   if (visitCount > 0) {
     score += 1; // Familiar place
     if (visitCount > 5) {
@@ -52,7 +52,7 @@ function calculateRestaurantScore(
 
 export async function POST(request: Request) {
   try {
-    const { preferences, location } = await request.json();
+    const { preferences } = await request.json();
     
     // Mock data - In production, this would come from your database
     const mockRestaurants: Restaurant[] = [
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
     const currentHour = new Date().getHours();
 
     // Mock user history - In production, this would come from your database
-    const mockUserHistory: any[] = [];
+    const mockUserHistory: UserHistory[] = [];
 
     // Score and sort restaurants
     const scoredRestaurants = mockRestaurants

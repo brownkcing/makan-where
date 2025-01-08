@@ -59,14 +59,14 @@ export default function RestaurantDetail({ id }: { id: string }) {
         {/* Photo Gallery */}
         <div className="overflow-x-auto mb-6">
           <div className="flex gap-4">
-            {restaurant.photos.map((photo, index) => (
+            {/* {restaurant.photos.map((photo, index) => (
               <img
                 key={index}
                 src={photo}
                 alt={`${restaurant.name} photo ${index + 1}`}
                 className="w-72 h-48 rounded-lg object-cover flex-none"
               />
-            ))}
+            ))} */}
           </div>
         </div>
 
