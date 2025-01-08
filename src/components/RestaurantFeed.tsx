@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import RestaurantCard from './RestaurantCard';
+import { RestaurantCard } from './RestaurantCard';
 import { Restaurant } from '@/lib/types';
 import {QuickFilters} from './QuickFilters';
 
@@ -30,7 +30,11 @@ export default function RestaurantFeed() {
             { name: 'Mee Goreng', price: 4.50, rating: 4.6, orderCount: 500 }
           ],
           peakHours: ['7', '8', '12', '13', '18', '19'],
-          currentWaitTime: 15
+          currentWaitTime: 15,
+          coordinates: {
+            lat: 3.1390,
+            lng: 101.6869
+          }
         },
         // Add more mock restaurants...
       ];
@@ -45,7 +49,7 @@ export default function RestaurantFeed() {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-sm p-4 space-y-4">
-        <h2 className="text-lg font-semibold">Where to eat?</h2>
+        <h2 className="text-xl font-bold text-black">Where to eat?</h2>
         <QuickFilters />
         <button
           onClick={getRecommendations}

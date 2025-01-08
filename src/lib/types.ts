@@ -18,6 +18,11 @@ export interface Restaurant {
     }>;
     peakHours: string[];
     currentWaitTime?: number;
+    coordinates: {
+        lat: number;
+        lng: number;
+      };
+    address?: number | string;
   }
   
   export interface UserPreferences {

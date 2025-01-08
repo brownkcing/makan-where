@@ -1,11 +1,13 @@
 'use client';
 
-import { Settings, Map } from 'lucide-react';
 import { useState } from 'react';
+import { Settings, Map } from 'lucide-react';
 import PreferencesModal from './PreferencesModal';
+import MapViewDrawer from './maps/MapViewDrawer';
 
 export default function Header() {
   const [showPreferences, setShowPreferences] = useState(false);
+  const [isMapOpen, setIsMapOpen] = useState(false);
 
   return (
     <header className="bg-white shadow-sm">
@@ -14,17 +16,18 @@ export default function Header() {
         
         <div className="flex items-center gap-4">
           <button 
-            className="p-2 hover:bg-gray-100 rounded-full"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            onClick={() => setIsMapOpen(true)}
             aria-label="Open map"
           >
-            <Map className="w-6 h-6 text-gray-600" />
+            <Map className="w-6 h-6 text-black" />
           </button>
           <button 
-            className="p-2 hover:bg-gray-100 rounded-full"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             onClick={() => setShowPreferences(true)}
             aria-label="Open preferences"
           >
-            <Settings className="w-6 h-6 text-gray-600" />
+            <Settings className="w-6 h-6 text-black" />
           </button>
         </div>
 
@@ -44,6 +47,12 @@ export default function Header() {
             onClose={() => setShowPreferences(false)}
           />
         )}
+
+        <MapViewDrawer 
+          isOpen={isMapOpen}
+          onClose={() => setIsMapOpen(false)}
+          restaurants={[]} // Add your restaurants data here
+        />
       </div>
     </header>
   );
