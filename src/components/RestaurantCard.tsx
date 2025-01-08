@@ -1,5 +1,7 @@
 import { Restaurant } from '@/lib/types';
-import { Star, Clock, Users } from 'lucide-react';
+import { Star, Clock, Users, Heart } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -7,9 +9,23 @@ interface RestaurantCardProps {
 
 export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
   const getPriceIndicator = (level: number) => '💰'.repeat(level);
+  const [isFavorited, setIsFavorited] = useState(false);
   
   return (
+    <Link href={`/restaurant/${restaurant.id}`} className="block">
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+    <button 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsFavorited(!isFavorited);
+          }}
+          className="absolute top-4 right-4 p-2 rounded-full bg-white/80 backdrop-blur-sm"
+        >
+          <Heart 
+            className={`w-5 h-5 ${isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} 
+          />
+        </button>
       <div className="p-4">
         <div className="flex justify-between items-start mb-3">
           <h3 className="text-xl font-bold">{restaurant.name}</h3>
@@ -68,5 +84,6 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
         )}
       </div>
     </div>
+    </Link>
   );
 }
