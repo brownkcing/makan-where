@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, InfoWindow, Marker } from '@react-google-maps/api';
 import { Restaurant } from '@/lib/types';
+import { Locate } from 'lucide-react';
 
 const containerStyle = {
   width: '100%',
@@ -26,42 +27,46 @@ export default function MapView({
   className = 'h-[400px]',
 }: MapViewProps) {
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [userLocation, setUserLocation] = useState<google.maps.LatLngLiteral | null>(null);
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-    libraries: ['places'],
+    libraries: ['places']
   });
 
-  useEffect(() => {
-    // Fetch location using Google Geolocation API
-    const fetchGoogleLocation = async () => {
-      try {
-        const response = await fetch(
-          `https://www.googleapis.com/geolocation/v1/geolocate?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`,
-          {
-            method: 'POST',
-          }
-        );
+  const handleLocationClick = () => {
+    setIsLocating(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('Position accuracy:', position.coords.accuracy, 'meters');
+          
+          const pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          console.log('Current position:', pos);
 
-        const data = await response.json();
-
-        if (data.location) {
-          const { lat, lng } = data.location;
-          setUserLocation({ lat, lng });
-        } else {
-          console.log('Error fetching location');
-          setUserLocation(defaultCenter);
+          setUserLocation(pos);
+          map?.panTo(pos);
+          map?.setZoom(17);
+          setIsLocating(false);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setIsLocating(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
-      } catch (error) {
-        console.error('Error fetching Google geolocation:', error);
-        setUserLocation(defaultCenter);
-      }
-    };
-
-    fetchGoogleLocation();
-  }, []);
+      );
+    }
+  };
 
   if (!isLoaded) return <div className={`${className} bg-gray-100 animate-pulse`} />;
 
@@ -71,6 +76,7 @@ export default function MapView({
         mapContainerStyle={containerStyle}
         center={userLocation || defaultCenter}
         zoom={15}
+        onLoad={setMap}
         options={{
           zoomControl: true,
           streetViewControl: true,
@@ -85,6 +91,21 @@ export default function MapView({
           },
         }}
       >
+        {/* User location marker */}
+        {userLocation && (
+          <Marker
+            position={userLocation}
+            icon={{
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 8,
+              fillColor: "#4285F4",
+              fillOpacity: 1,
+              strokeColor: "#ffffff",
+              strokeWeight: 2,
+            }}
+          />
+        )}
+
         {/* Restaurant markers */}
         {restaurants.map((restaurant) => (
           restaurant.coordinates && (
@@ -117,6 +138,19 @@ export default function MapView({
           )
         ))}
       </GoogleMap>
+
+      <button
+        onClick={handleLocationClick}
+        disabled={isLocating}
+        className={`
+          absolute bottom-4 right-4 p-3 bg-white rounded-full shadow-lg
+          hover:bg-gray-50 transition-all
+          ${isLocating ? 'animate-pulse' : ''}
+        `}
+        aria-label="Find my location"
+      >
+        <Locate className={`w-5 h-5 ${isLocating ? 'text-blue-600' : 'text-black'}`} />
+      </button>
     </div>
   );
 }
