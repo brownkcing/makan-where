@@ -10,10 +10,11 @@ export default function QuickFilters({
   onFilterChange,
 }: QuickFiltersProps) {
   const filters = [
-    { id: "nearby", label: "Nearby" },
-    { id: "open", label: "Open Now" },
-    { id: "halal", label: "Halal" },
-    { id: "vegetarian", label: "Vegetarian" },
+    { id: "nearby", label: "Nearby", icon: "📍" },
+    { id: "open", label: "Open Now", icon: "⏰" },
+    { id: "noqueue", label: "No Queue", icon: "👥" },
+    { id: "halal", label: "Halal", icon: "🥘" },
+    { id: "vegetarian", label: "Vegetarian", icon: "🥬" },
   ];
 
   const toggleFilter = (filterId: string) => {
@@ -39,7 +40,8 @@ export default function QuickFilters({
             }
           `}
         >
-          {filter.label}
+          <span>{filter.icon}</span>
+          <span className="font-medium">{filter.label}</span>
         </button>
       ))}
     </div>
