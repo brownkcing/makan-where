@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { GoogleMap, useJsApiLoader, InfoWindow, Marker } from '@react-google-maps/api';
 import { Restaurant } from '@/lib/types';
 import { Locate } from 'lucide-react';
@@ -40,31 +40,44 @@ export default function MapView({
   const handleLocationClick = () => {
     setIsLocating(true);
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          console.log('Position accuracy:', position.coords.accuracy, 'meters');
-          
-          const pos = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-          console.log('Current position:', pos);
-
-          setUserLocation(pos);
-          map?.panTo(pos);
-          map?.setZoom(17);
-          setIsLocating(false);
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          setIsLocating(false);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        }
-      );
+      const getAccuratePosition = () => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            console.log('Position accuracy:', position.coords.accuracy, 'meters');
+            
+            // If accuracy is worse than 100 meters and we haven't tried too many times
+            if (position.coords.accuracy > 100 && retryCount < 3) {
+              retryCount++;
+              setTimeout(getAccuratePosition, 2000); // Try again after 2 seconds
+              return;
+            }
+            
+            const pos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            };
+            console.log('Current position:', pos);
+  
+            setUserLocation(pos);
+            map?.panTo(pos);
+            map?.setZoom(17);
+            setIsLocating(false);
+          },
+          (error) => {
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
+            setIsLocating(false);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 30000,
+            maximumAge: 0
+          }
+        );
+      };
+  
+      let retryCount = 0;
+      getAccuratePosition();
     }
   };
 
