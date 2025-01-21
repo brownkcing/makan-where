@@ -1,46 +1,74 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { RestaurantCard } from './RestaurantCard';
-import { Restaurant } from '@/lib/types';
-import {QuickFilters} from './QuickFilters';
+import { useState } from "react";
+import { Restaurant } from "@/lib/types";
+import { RestaurantCard } from "./RestaurantCard";
+import QuickFilters from "./QuickFilters";
 
-export default function RestaurantFeed() {
+interface RestaurantFeedProps {
+  onRecommendationsChange?: (restaurants: Restaurant[]) => void;
+}
+
+export default function RestaurantFeed({
+  onRecommendationsChange,
+}: RestaurantFeedProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [recommendations, setRecommendations] = useState<Restaurant[]>([]);
 
-  const getRecommendations = async () => {
+  const findRestaurants = async () => {
     setIsLoading(true);
+    setError(null);
+
     try {
-      // Mock data for now
-      const mockRestaurants: Restaurant[] = [
-        {
-          id: '1',
-          name: 'Nasi Lemak Paradise',
-          cuisine: ['Malaysian', 'Halal'],
-          distance: '0.3 km',
-          rating: 4.5,
-          priceLevel: 1,
-          dietaryOptions: {
-            halal: true,
-            vegetarian: false
-          },
-          popularDishes: [
-            { name: 'Special Nasi Lemak', price: 5.50, rating: 4.8, orderCount: 1000 },
-            { name: 'Mee Goreng', price: 4.50, rating: 4.6, orderCount: 500 }
-          ],
-          peakHours: ['7', '8', '12', '13', '18', '19'],
-          currentWaitTime: 15,
-          coordinates: {
-            lat: 3.1390,
-            lng: 101.6869
-          }
+      // Get user's location
+      let userLocation = null;
+      if (navigator.geolocation) {
+        try {
+          const position = await new Promise<GeolocationPosition>(
+            (resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject);
+            }
+          );
+          userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+        } catch (error) {
+          console.log("Location not available:", error);
+        }
+      }
+
+      // Call the recommendations API
+      const response = await fetch("/api/recommendations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        // Add more mock restaurants...
-      ];
-      setRestaurants(mockRestaurants);
+        body: JSON.stringify({
+          userLocation,
+          currentHour: new Date().getHours(),
+          filters: activeFilters,
+          preferences: {
+            dietary: {
+              halal: activeFilters.includes("halal"),
+              vegetarian: activeFilters.includes("vegetarian"),
+            },
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get recommendations");
+      }
+
+      const data = await response.json();
+      setRecommendations(data);
+      onRecommendationsChange?.(data);
     } catch (error) {
-      console.error('Error fetching recommendations:', error);
+      console.error("Error:", error);
+      setError("Unable to find restaurants. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -50,22 +78,23 @@ export default function RestaurantFeed() {
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-sm p-4 space-y-4">
         <h2 className="text-xl font-bold text-black">Where to eat?</h2>
-        <QuickFilters />
+        <QuickFilters
+          activeFilters={activeFilters}
+          onFilterChange={setActiveFilters}
+        />
         <button
-          onClick={getRecommendations}
+          onClick={findRestaurants}
           disabled={isLoading}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg disabled:opacity-50 transition-colors"
         >
-          {isLoading ? 'Finding places...' : 'Find me a place!'}
+          {isLoading ? "Finding places..." : "Find me a place!"}
         </button>
+        {error && <p className="text-red-600 text-sm">{error}</p>}
       </div>
 
       <div className="space-y-4">
-        {restaurants.map((restaurant) => (
-          <RestaurantCard 
-            key={restaurant.id} 
-            restaurant={restaurant}
-          />
+        {recommendations.map((restaurant) => (
+          <RestaurantCard key={restaurant.id} restaurant={restaurant} />
         ))}
       </div>
     </div>
