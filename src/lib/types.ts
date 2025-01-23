@@ -13,23 +13,18 @@ export interface Restaurant {
     halal: boolean;
     vegetarian: boolean;
   };
-  popularDishes: Array<{
-    name: string;
-    price: number;
-    rating: number;
-    orderCount: number;
-  }>;
-  peakHours: string[];
+  isOpenNow?: boolean;
+  address: string;
   currentWaitTime: number;
 }
 
 export interface UserPreferences {
-  budget?: any;
-  hungerLevel?: any;
-  favoriteTypes?: any;
-  avoidTypes?: any;
+  budget: "simple" | "modest" | "extravagant";
   dietary: {
     halal: boolean;
     vegetarian: boolean;
   };
+  hungerLevel: "light" | "normal" | "very hungry";
+  favoriteTypes: string[];
+  avoidTypes: string[];
 }

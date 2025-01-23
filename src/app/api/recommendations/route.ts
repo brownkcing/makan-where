@@ -1,83 +1,97 @@
+// src/app/api/recommendations/route.ts
 import { NextResponse } from "next/server";
-import type { Restaurant } from "@/lib/types";
+import {
+  Client,
+  PlacesNearbyResponse,
+  Place,
+} from "@googlemaps/google-maps-services-js";
+
+interface Restaurant {
+  id: string;
+  name: string;
+  cuisine: string[];
+  distance: string;
+  rating: number;
+  priceLevel: number;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  dietaryOptions: {
+    halal: boolean;
+    vegetarian: boolean;
+  };
+  isOpenNow: boolean;
+  address: string;
+}
+
+const client = new Client({});
 
 export async function POST(request: Request) {
   try {
-    const {
-      userLocation,
-      currentHour,
-      preferences,
-      filters = [],
-    } = await request.json();
+    const { userLocation } = await request.json();
 
-    // First get all restaurants from main endpoint
-    const response = await fetch(
-      `${request.headers.get("origin")}/api/restaurants`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          filters,
-          userLocation,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch restaurants");
-    }
-
-    let recommendations: Restaurant[] = await response.json();
-
-    // Apply time-based sorting
-    if (currentHour >= 6 && currentHour < 11) {
-      // Breakfast time
-      recommendations = recommendations.sort((a, b) => {
-        const aIsBreakfast =
-          a.peakHours.includes("7") || a.peakHours.includes("8");
-        const bIsBreakfast =
-          b.peakHours.includes("7") || b.peakHours.includes("8");
-        return (bIsBreakfast ? 1 : 0) - (aIsBreakfast ? 1 : 0);
-      });
-    } else if (currentHour >= 11 && currentHour < 15) {
-      // Lunch time
-      recommendations = recommendations.sort((a, b) => {
-        const aIsLunch =
-          a.peakHours.includes("12") || a.peakHours.includes("13");
-        const bIsLunch =
-          b.peakHours.includes("12") || b.peakHours.includes("13");
-        return (bIsLunch ? 1 : 0) - (aIsLunch ? 1 : 0);
-      });
-    } else if (currentHour >= 17 && currentHour < 22) {
-      // Dinner time
-      recommendations = recommendations.sort((a, b) => {
-        const aIsDinner =
-          a.peakHours.includes("18") || a.peakHours.includes("19");
-        const bIsDinner =
-          b.peakHours.includes("18") || b.peakHours.includes("19");
-        return (bIsDinner ? 1 : 0) - (aIsDinner ? 1 : 0);
-      });
-    }
-
-    // Apply additional scoring based on rating and wait time
-    recommendations = recommendations.sort((a, b) => {
-      // Score based on rating (0-5 points)
-      const ratingScore = (b.rating - a.rating) * 5;
-
-      // Score based on wait time (-3 to 0 points)
-      const waitScore = (a.currentWaitTime - b.currentWaitTime) / 10;
-
-      return ratingScore + waitScore;
+    const { data: nearbyData } = await client.placesNearby({
+      params: {
+        location: userLocation,
+        radius: 1500,
+        type: "restaurant",
+        key: process.env.GOOGLE_PLACES_API_KEY!,
+        opennow: true,
+      },
     });
 
-    // Limit to top 5 recommendations
-    recommendations = recommendations.slice(0, 5);
+    const restaurants = await Promise.all(
+      nearbyData.results.slice(0, 5).map(async (place: Place) => {
+        if (!place.place_id || !place.geometry?.location) return null;
 
-    return NextResponse.json(recommendations);
+        const { data: placeDetails } = await client.placeDetails({
+          params: {
+            place_id: place.place_id,
+            key: process.env.GOOGLE_PLACES_API_KEY!,
+            fields: [
+              "name",
+              "rating",
+              "price_level",
+              "opening_hours",
+              "formatted_address",
+              "geometry",
+              "types",
+            ],
+          },
+        });
+
+        return {
+          id: place.place_id,
+          name: place.name || "Unknown",
+          cuisine:
+            place.types?.filter(
+              (type) => !["restaurant", "food", "establishment"].includes(type)
+            ) || [],
+          distance: place.vicinity || "Unknown distance",
+          rating: place.rating || 0,
+          priceLevel: place.price_level || 1,
+          coordinates: {
+            lat: place.geometry.location.lat,
+            lng: place.geometry.location.lng,
+          },
+          dietaryOptions: {
+            halal: false,
+            vegetarian: false,
+          },
+          isOpenNow: Boolean(placeDetails.result.opening_hours?.open_now),
+          address: place.vicinity || "No address available",
+        };
+      })
+    );
+
+    const validRestaurants = restaurants.filter(
+      (r): r is NonNullable<typeof r> => r !== null
+    );
+
+    return NextResponse.json(validRestaurants);
   } catch (error) {
-    console.error("Error:", error);
+    console.error("API Error:", error);
     return NextResponse.json(
       { error: "Failed to get recommendations" },
       { status: 500 }

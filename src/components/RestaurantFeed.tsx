@@ -15,32 +15,24 @@ export default function RestaurantFeed({
   const [isLoading, setIsLoading] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [recommendations, setRecommendations] = useState<Restaurant[]>([]);
+  const [recommendations, setRecommendations] = useState<Restaurant[]>([]); // Add this state
 
   const findRestaurants = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Get user's location
-      let userLocation = null;
-      if (navigator.geolocation) {
-        try {
-          const position = await new Promise<GeolocationPosition>(
-            (resolve, reject) => {
-              navigator.geolocation.getCurrentPosition(resolve, reject);
-            }
-          );
-          userLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-        } catch (error) {
-          console.log("Location not available:", error);
+      const position = await new Promise<GeolocationPosition>(
+        (resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject);
         }
-      }
+      );
 
-      // Call the recommendations API
+      const userLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+      };
+
       const response = await fetch("/api/recommendations", {
         method: "POST",
         headers: {
@@ -50,25 +42,21 @@ export default function RestaurantFeed({
           userLocation,
           currentHour: new Date().getHours(),
           filters: activeFilters,
-          preferences: {
-            dietary: {
-              halal: activeFilters.includes("halal"),
-              vegetarian: activeFilters.includes("vegetarian"),
-            },
-          },
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to get recommendations");
-      }
+      if (!response.ok) throw new Error("Failed to get recommendations");
 
       const data = await response.json();
-      setRecommendations(data);
-      onRecommendationsChange?.(data);
-    } catch (error) {
+      setRecommendations(data); // Set local state
+      onRecommendationsChange?.(data); // Update parent state
+    } catch (error: any) {
       console.error("Error:", error);
-      setError("Unable to find restaurants. Please try again.");
+      setError(
+        error.message === "User denied Geolocation"
+          ? "Please enable location access to find nearby restaurants."
+          : "Unable to find restaurants. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -92,6 +80,7 @@ export default function RestaurantFeed({
         {error && <p className="text-red-600 text-sm">{error}</p>}
       </div>
 
+      {/* Add this section to display restaurants */}
       <div className="space-y-4">
         {recommendations.map((restaurant) => (
           <RestaurantCard key={restaurant.id} restaurant={restaurant} />
