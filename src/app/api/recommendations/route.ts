@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   try {
     const { userLocation } = await request.json();
 
-    const { data: nearbyData } = await client.placesNearby({
+    const { data: nearbyData }: PlacesNearbyResponse  = await client.placesNearby({
       params: {
         location: userLocation,
         radius: 1500,
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       },
     });
 
-    const restaurants = await Promise.all(
+    const restaurants:(Restaurant | null)[] = await Promise.all(
       nearbyData.results.slice(0, 5).map(async (place: Place) => {
         if (!place.place_id || !place.geometry?.location) return null;
 
