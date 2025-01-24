@@ -50,10 +50,11 @@ export default function RestaurantFeed({
       const data = await response.json();
       setRecommendations(data); // Set local state
       onRecommendationsChange?.(data); // Update parent state
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error:", error);
+      if (error instanceof Error)
       setError(
-        error.message === "User denied Geolocation"
+        (error).message === "User denied Geolocation"
           ? "Please enable location access to find nearby restaurants."
           : "Unable to find restaurants. Please try again."
       );

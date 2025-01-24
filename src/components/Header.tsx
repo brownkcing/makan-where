@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Settings, Map } from "lucide-react";
 import PreferencesModal from "./PreferencesModal";
-import MapViewDrawer from "./maps/MapViewDrawer";
 
 interface HeaderProps {
   onMapClick: () => void; // Added this prop

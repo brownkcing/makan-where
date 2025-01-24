@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Heart, Clock, Tag, ChevronDown, Star, MapPin } from "lucide-react";
+import { Heart, Clock, ChevronDown, Star, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { Restaurant } from "@/lib/types";
 
@@ -19,7 +19,6 @@ export const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
       whileHover={{ y: -2 }}
       transition={{ duration: 0.2 }}
     >
-      {console.log(restaurant) as any}
       <div className="p-4">
         <div className="flex justify-between items-start">
           <div className="flex-1">
