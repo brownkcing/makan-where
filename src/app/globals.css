@@ -15,7 +15,8 @@
 }
 
 body {
-  color: var(--foreground);
+  /* change this once dark theme is configured */
+  color: black;
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }

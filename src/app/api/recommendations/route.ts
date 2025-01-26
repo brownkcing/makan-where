@@ -65,16 +65,15 @@ export async function POST(request: Request) {
   try {
     const { userLocation, filters = [] } = await request.json();
 
-    const { data: nearbyData }: PlacesNearbyResponse =
-      await client.placesNearby({
-        params: {
-          location: userLocation,
-          radius: 1500,
-          type: "restaurant",
-          key: process.env.GOOGLE_PLACES_API_KEY!,
-          opennow: true,
-        },
-      });
+    const { data: nearbyData } = await client.placesNearby({
+      params: {
+        location: userLocation,
+        radius: 1500,
+        type: "restaurant",
+        key: process.env.GOOGLE_PLACES_API_KEY!,
+        opennow: true,
+      },
+    });
 
     const restaurants = await Promise.all(
       nearbyData.results.slice(0, 10).map(async (place: Place) => {

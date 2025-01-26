@@ -47,8 +47,6 @@ Reason: [Brief explanation]
 
 Be concise and specific.`;
 
-    console.log("Generated prompt:", prompt);
-
     try {
       // 4. Get recommendation from Mistral
       const stream = await client.chat.stream({
@@ -65,12 +63,9 @@ Be concise and specific.`;
       for await (const chunk of stream) {
         if (chunk.data?.choices?.[0]?.delta?.content) {
           const content = chunk.data.choices[0].delta.content;
-          console.log("Received content:", content);
           response += content;
         }
       }
-
-      console.log("Complete AI response:", response);
 
       if (!response) {
         throw new Error("Empty response from API");
@@ -86,7 +81,6 @@ Be concise and specific.`;
       }
 
       const restaurantName = nameMatch.split(":")?.[1]?.trim();
-      console.log("Extracted name:", restaurantName);
 
       // 6. Find matching restaurant
       const recommended = data.availableRestaurants.find((r: Restaurant) =>
@@ -104,7 +98,6 @@ Be concise and specific.`;
       }
 
       // 7. Fallback if no match found
-      console.log("No matching restaurant found, using fallback");
       const fallback = [...data.availableRestaurants].sort(
         (a, b) => (b.rating || 0) - (a.rating || 0)
       )[0];
