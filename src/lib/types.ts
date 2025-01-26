@@ -20,11 +20,28 @@ export interface Restaurant {
 
 export interface UserPreferences {
   budget: "simple" | "modest" | "extravagant";
-  dietary: {
-    halal: boolean;
-    vegetarian: boolean;
+  userPreferences: {
+    dietary: {
+      halal: boolean;
+      vegetarian: boolean;
+    };
   };
   hungerLevel: "light" | "normal" | "very hungry";
   favoriteTypes: string[];
   avoidTypes: string[];
+}
+
+export interface PlaceResult {
+  place_id: string;
+  name: string;
+  types: string[];
+  distance: number;
+  rating: number;
+  price_level?: number;
+  geometry: {
+    location: {
+      lat: number;
+      lng: number;
+    };
+  };
 }

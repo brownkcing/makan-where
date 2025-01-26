@@ -1,15 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Heart, Clock, Tag, ChevronDown, Star, MapPin } from "lucide-react";
+import { Heart, Clock, ChevronDown, Star, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { Restaurant } from "@/lib/types";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
+  aiExplanation?: string;
+  isAiRecommendation?: boolean;
 }
 
-export const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
+export const RestaurantCard = ({
+  restaurant,
+  aiExplanation,
+  isAiRecommendation,
+}: RestaurantCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
 
@@ -19,7 +25,6 @@ export const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
       whileHover={{ y: -2 }}
       transition={{ duration: 0.2 }}
     >
-      {console.log(restaurant) as any}
       <div className="p-4">
         <div className="flex justify-between items-start">
           <div className="flex-1">
@@ -53,16 +58,26 @@ export const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
           </button>
         </div>
 
-        <div className="flex flex-wrap gap-2 mt-3">
-          {restaurant.cuisine.map((type) => (
-            <span
-              key={type}
-              className="px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-medium"
-            >
-              {type}
-            </span>
-          ))}
-        </div>
+        {isAiRecommendation && aiExplanation && (
+          <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+            <div className="text-sm text-blue-700 leading-relaxed">
+              {aiExplanation}
+            </div>
+          </div>
+        )}
+
+        {restaurant.cuisine && restaurant.cuisine.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {restaurant.cuisine.map((type, index) => (
+              <span
+                key={index}
+                className="px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-medium"
+              >
+                {type}
+              </span>
+            ))}
+          </div>
+        )}
 
         {isExpanded && (
           <motion.div
@@ -75,8 +90,7 @@ export const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
             <div className="flex items-center gap-2 mb-2">
               <Clock className="w-4 h-4 text-gray-600" />
               <span className="text-black">
-                {restaurant.isOpenNow ? "Open" : "Closed"} •{" "}
-                {restaurant.currentWaitTime}min wait
+                {restaurant.isOpenNow ? "Open" : "Closed"}
               </span>
             </div>
 

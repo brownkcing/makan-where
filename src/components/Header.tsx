@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Settings, Map } from "lucide-react";
 import PreferencesModal from "./PreferencesModal";
-import MapViewDrawer from "./maps/MapViewDrawer";
 
 interface HeaderProps {
   onMapClick: () => void; // Added this prop
@@ -38,13 +37,14 @@ export default function Header({ onMapClick }: HeaderProps) {
           <PreferencesModal
             preferences={{
               budget: "modest",
-              dietary: { halal: false, vegetarian: false },
+              userPreferences: {
+                dietary: { halal: false, vegetarian: false },
+              },
               hungerLevel: "normal",
               favoriteTypes: [],
               avoidTypes: [],
             }}
-            onSave={(prefs) => {
-              console.log("Saved preferences:", prefs);
+            onSave={() => {
               setShowPreferences(false);
             }}
             onClose={() => setShowPreferences(false)}

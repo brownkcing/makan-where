@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Header from "@/components/Header";
 import MapViewDrawer from "@/components/maps/MapViewDrawer";
-import { Restaurant } from "@/lib/types";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -11,7 +10,6 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const [isMapOpen, setIsMapOpen] = useState(false);
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -20,7 +18,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
       <MapViewDrawer
         isOpen={isMapOpen}
         onClose={() => setIsMapOpen(false)}
-        restaurants={restaurants}
+        restaurants={[]}
       />
     </div>
   );

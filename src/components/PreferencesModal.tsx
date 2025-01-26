@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { UserPreferences } from '@/lib/types';
+import { useState } from "react";
+import { UserPreferences } from "@/lib/types";
 
 interface PreferencesModalProps {
   preferences: UserPreferences;
@@ -7,10 +7,10 @@ interface PreferencesModalProps {
   onClose: () => void;
 }
 
-export default function PreferencesModal({ 
-  preferences, 
-  onSave, 
-  onClose 
+export default function PreferencesModal({
+  preferences,
+  onSave,
+  onClose,
 }: PreferencesModalProps) {
   const [form, setForm] = useState<UserPreferences>(preferences);
 
@@ -18,17 +18,19 @@ export default function PreferencesModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg max-w-md w-full p-6">
         <h2 className="text-xl font-bold mb-4">Your Preferences</h2>
-        
+
         <div className="space-y-4">
           <div>
             <label className="block mb-2">Budget</label>
-            <select 
+            <select
               className="w-full p-2 border rounded"
               value={form.budget}
-              onChange={(e) => setForm({
-                ...form,
-                budget: e.target.value as UserPreferences['budget']
-              })}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  budget: e.target.value as UserPreferences["budget"],
+                })
+              }
             >
               <option value="simple">Simple (💰)</option>
               <option value="modest">Modest (💰💰)</option>
@@ -42,11 +44,19 @@ export default function PreferencesModal({
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={form.dietary.halal}
-                  onChange={(e) => setForm({
-                    ...form,
-                    dietary: { ...form.dietary, halal: e.target.checked }
-                  })}
+                  checked={form.userPreferences.dietary.halal}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      userPreferences: {
+                        ...form.userPreferences,
+                        dietary: {
+                          ...form.userPreferences.dietary,
+                          halal: e.target.checked,
+                        },
+                      },
+                    })
+                  }
                   className="mr-2"
                 />
                 Halal
@@ -54,11 +64,19 @@ export default function PreferencesModal({
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={form.dietary.vegetarian}
-                  onChange={(e) => setForm({
-                    ...form,
-                    dietary: { ...form.dietary, vegetarian: e.target.checked }
-                  })}
+                  checked={form.userPreferences.dietary.vegetarian}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      userPreferences: {
+                        ...form.userPreferences,
+                        dietary: {
+                          ...form.userPreferences.dietary,
+                          halal: e.target.checked,
+                        },
+                      },
+                    })
+                  }
                   className="mr-2"
                 />
                 Vegetarian
@@ -68,13 +86,15 @@ export default function PreferencesModal({
 
           <div>
             <label className="block mb-2">How hungry are you?</label>
-            <select 
+            <select
               className="w-full p-2 border rounded"
               value={form.hungerLevel}
-              onChange={(e) => setForm({
-                ...form,
-                hungerLevel: e.target.value as UserPreferences['hungerLevel']
-              })}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  hungerLevel: e.target.value as UserPreferences["hungerLevel"],
+                })
+              }
             >
               <option value="light">Just a bit hungry</option>
               <option value="normal">Normal hungry</option>

@@ -4,9 +4,16 @@ import { useState } from "react";
 import { Restaurant } from "@/lib/types";
 import { RestaurantCard } from "./RestaurantCard";
 import QuickFilters from "./QuickFilters";
+import { Sparkles } from "lucide-react";
+import { aiRecommendStore, recommendationStore } from "@/store/apistore";
 
 interface RestaurantFeedProps {
   onRecommendationsChange?: (restaurants: Restaurant[]) => void;
+}
+
+interface AiRecommendation {
+  recommendation: Restaurant;
+  explanation: string;
 }
 
 export default function RestaurantFeed({
@@ -15,7 +22,9 @@ export default function RestaurantFeed({
   const [isLoading, setIsLoading] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [recommendations, setRecommendations] = useState<Restaurant[]>([]); // Add this state
+  const [recommendations, setRecommendations] = useState<Restaurant[]>([]);
+  const [aiRecommendation, setAiRecommendation] =
+    useState<AiRecommendation | null>(null);
 
   const findRestaurants = async () => {
     setIsLoading(true);
@@ -28,35 +37,53 @@ export default function RestaurantFeed({
         }
       );
 
-      const userLocation = {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      };
-
-      const response = await fetch("/api/recommendations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await recommendationStore.callApi("POST", {
+        userLocation: {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
         },
-        body: JSON.stringify({
-          userLocation,
-          currentHour: new Date().getHours(),
-          filters: activeFilters,
-        }),
+        currentHour: new Date().getHours(),
+        filters: activeFilters,
       });
 
-      if (!response.ok) throw new Error("Failed to get recommendations");
+      if (!response.success) {
+        throw new Error(response.error || "Failed to get recommendations");
+      }
 
-      const data = await response.json();
-      setRecommendations(data); // Set local state
-      onRecommendationsChange?.(data); // Update parent state
-    } catch (error: any) {
+      const restaurants = response.data;
+      setRecommendations(restaurants);
+      onRecommendationsChange?.(restaurants);
+
+      //AI recommendations
+      if (restaurants?.length) {
+        const aiResponse = await aiRecommendStore.callApi("POST", {
+          timeOfDay: new Date().getHours(),
+          availableRestaurants: restaurants,
+          userPreferences: {
+            dietary: {
+              halal: activeFilters.includes("halal"),
+              vegetarian: activeFilters.includes("vegetarian"),
+            },
+          },
+        });
+
+        if (aiResponse.success && aiResponse.data.data) {
+          const { recommendation, explanation } = aiResponse.data.data;
+          if (recommendation) {
+            setAiRecommendation({
+              recommendation,
+              explanation,
+            });
+          }
+        }
+      }
+    } catch (error: unknown) {
       console.error("Error:", error);
-      setError(
-        error.message === "User denied Geolocation"
+      const errorMessage =
+        error instanceof Error && error.message === "User denied Geolocation"
           ? "Please enable location access to find nearby restaurants."
-          : "Unable to find restaurants. Please try again."
-      );
+          : "Unable to find restaurants. Please try again.";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +107,20 @@ export default function RestaurantFeed({
         {error && <p className="text-red-600 text-sm">{error}</p>}
       </div>
 
-      {/* Add this section to display restaurants */}
+      {aiRecommendation && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-5 h-5 text-blue-500" />
+            <h3 className="font-semibold text-lg">AI Recommendation</h3>
+          </div>
+          <RestaurantCard
+            restaurant={aiRecommendation.recommendation}
+            aiExplanation={aiRecommendation.explanation}
+            isAiRecommendation={true}
+          />
+        </div>
+      )}
+
       <div className="space-y-4">
         {recommendations.map((restaurant) => (
           <RestaurantCard key={restaurant.id} restaurant={restaurant} />

@@ -1,35 +1,69 @@
-// src/app/api/recommendations/route.ts
 import { NextResponse } from "next/server";
-import {
-  Client,
-  PlacesNearbyResponse,
-  Place,
-} from "@googlemaps/google-maps-services-js";
+import { Client, Place } from "@googlemaps/google-maps-services-js";
 
-interface Restaurant {
-  id: string;
-  name: string;
-  cuisine: string[];
-  distance: string;
-  rating: number;
-  priceLevel: number;
-  coordinates: {
-    lat: number;
-    lng: number;
+interface DietaryOptions {
+  halal: boolean;
+  vegetarian: boolean;
+}
+
+// interface Restaurant {
+//   id: string;
+//   name: string;
+//   cuisine: string[];
+//   distance: string;
+//   rating: number;
+//   userRatingsTotal?: number;
+//   priceLevel: number;
+//   coordinates: {
+//     lat: number;
+//     lng: number;
+//   };
+//   dietaryOptions: DietaryOptions;
+//   isOpenNow: boolean;
+//   address: string;
+// }
+
+// Type for our dietary options mapping
+type DietaryOptionsMap = {
+  [key: string]: DietaryOptions;
+};
+
+// Define known dietary options
+const DIETARY_OPTIONS: DietaryOptionsMap = {
+  "ChIJ-WGqCfu2zTERBPZRmyuVr6g": { halal: true, vegetarian: true }, // Example: Mamak restaurant
+  ChIJ6Sdk_vu2zTERgB6cjqYYPhc: { halal: true, vegetarian: false }, // Example: Malay restaurant
+  ChIJKZ8v_vu2zTERCC6cjqYYPxx: { halal: false, vegetarian: true }, // Example: Vegetarian restaurant
+  // Add more as needed
+};
+
+// Helper function to determine dietary options
+function getDietaryOptions(place: Place): DietaryOptions {
+  // First check our known mappings
+  if (place.place_id && DIETARY_OPTIONS[place.place_id]) {
+    return DIETARY_OPTIONS[place.place_id];
+  }
+
+  // Otherwise try to infer from name and types
+  const name = place.name?.toLowerCase() || "";
+
+  return {
+    halal:
+      name.includes("halal") ||
+      name.includes("muslim") ||
+      name.includes("mamak"), // Only using name checks since 'muslim' isn't a valid AddressType
+    vegetarian:
+      name.includes("veg") ||
+      name.includes("vegetarian") ||
+      name.includes("vegan"),
   };
-  dietaryOptions: {
-    halal: boolean;
-    vegetarian: boolean;
-  };
-  isOpenNow: boolean;
-  address: string;
 }
 
 const client = new Client({});
 
+// Rest of your existing code...
 export async function POST(request: Request) {
   try {
-    const { userLocation } = await request.json();
+    const { userLocation, filters = [] } = await request.json();
 
     const { data: nearbyData } = await client.placesNearby({
       params: {
@@ -42,7 +76,7 @@ export async function POST(request: Request) {
     });
 
     const restaurants = await Promise.all(
-      nearbyData.results.slice(0, 5).map(async (place: Place) => {
+      nearbyData.results.slice(0, 10).map(async (place: Place) => {
         if (!place.place_id || !place.geometry?.location) return null;
 
         const { data: placeDetails } = await client.placeDetails({
@@ -52,11 +86,13 @@ export async function POST(request: Request) {
             fields: [
               "name",
               "rating",
+              "user_ratings_total",
               "price_level",
               "opening_hours",
               "formatted_address",
               "geometry",
               "types",
+              "reviews",
             ],
           },
         });
@@ -66,30 +102,48 @@ export async function POST(request: Request) {
           name: place.name || "Unknown",
           cuisine:
             place.types?.filter(
-              (type) => !["restaurant", "food", "establishment"].includes(type)
+              (type) =>
+                ![
+                  "restaurant",
+                  "food",
+                  "establishment",
+                  "point_of_interest",
+                ].includes(type)
             ) || [],
           distance: place.vicinity || "Unknown distance",
           rating: place.rating || 0,
+          userRatingsTotal: place.user_ratings_total,
           priceLevel: place.price_level || 1,
           coordinates: {
             lat: place.geometry.location.lat,
             lng: place.geometry.location.lng,
           },
-          dietaryOptions: {
-            halal: false,
-            vegetarian: false,
-          },
+          dietaryOptions: getDietaryOptions(place),
           isOpenNow: Boolean(placeDetails.result.opening_hours?.open_now),
           address: place.vicinity || "No address available",
         };
       })
     );
 
-    const validRestaurants = restaurants.filter(
-      (r): r is NonNullable<typeof r> => r !== null
-    );
+    // Filter and sort restaurants
+    const validRestaurants = restaurants
+      .filter((r): r is NonNullable<typeof r> => r !== null)
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
-    return NextResponse.json(validRestaurants);
+    // Apply dietary filters
+    let filteredRestaurants = validRestaurants;
+    if (filters.includes("halal")) {
+      filteredRestaurants = filteredRestaurants.filter(
+        (r) => r.dietaryOptions.halal
+      );
+    }
+    if (filters.includes("vegetarian")) {
+      filteredRestaurants = filteredRestaurants.filter(
+        (r) => r.dietaryOptions.vegetarian
+      );
+    }
+
+    return NextResponse.json(filteredRestaurants.slice(0, 5));
   } catch (error) {
     console.error("API Error:", error);
     return NextResponse.json(

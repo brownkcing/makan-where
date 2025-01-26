@@ -48,14 +48,10 @@ export default function MapView({
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log("Position accuracy:", position.coords.accuracy, "meters");
-
           const pos = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           };
-          console.log("Current position:", pos);
-
           setUserLocation(pos);
           map?.panTo(pos);
           map?.setZoom(17);
