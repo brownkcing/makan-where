@@ -35,10 +35,6 @@ class ApiStore {
   }
 }
 
-const isProd = process.env.NODE_ENV === "production";
-export const aiRecommendStore = new ApiStore(
-  isProd ? "/.netlify/functions/ai-recommend" : "/api/ai-recommend"
-);
-
+export const aiRecommendStore = new ApiStore("/api/ai-recommend");
 export const recommendationStore = new ApiStore("/api/recommendations");
 export const restaurantsStore = new ApiStore("/api/restaurants");
